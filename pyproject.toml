@@ -1,0 +1,58 @@
+[tool.poetry]
+name = "moex-sentiment-backtest"
+version = "0.1.0"
+description = "Event-driven MOEX backtesting using news sentiment signals."
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+packages = [{ include = "moex_sentiment_backtest", from = "src" }]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13"
+numpy = "^1.26.4"
+pandas = "^2.2.2"
+polars = "^1.0.0"
+pyarrow = "^16.1.0"
+numba = "^0.60.0"
+matplotlib = "^3.9.0"
+fire = "^0.6.0"
+pyyaml = "^6.0.1"
+pydantic = "^2.7.4"
+pydantic-settings = "^2.3.4"
+requests = "^2.32.3"
+apimoex = "^1.1.2"
+tqdm = "^4.66.4"
+openpyxl = "^3.1.5"
+orjson = "^3.10.3"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.2.2"
+ruff = "^0.5.6"
+mypy = "^1.10.1"
+pre-commit = "^3.7.1"
+types-PyYAML = "^6.0.12.20240808"
+types-requests = "^2.32.0.20240712"
+
+[tool.poetry.scripts]
+msbt = "moex_sentiment_backtest.cli:main"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-select = ["I", "UP", "B", "SIM", "C4", "FURB"]
+ignore = ["E501"]  # line-length handled by formatter
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+check_untyped_defs = true
+strict_equality = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
