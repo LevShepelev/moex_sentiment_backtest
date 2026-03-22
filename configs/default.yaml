@@ -1,0 +1,162 @@
+# Default backtest configuration. Tune this file and re-run `msbt run ...`.
+
+data:
+  # What to do if a price file for a ticker is missing
+  missing_prices: "skip"   # "skip" | "raise"
+  # If news timestamp is outside available prices, skip trade
+  missing_bars: "skip"     # "skip" | "raise"
+
+execution:
+  enable_costs: true
+  spread_bps: 12.0              # half-spread applied on each side via bid/ask fills
+  commission_bps: 1.0           # applied on traded value each side
+  slippage_bps: 2.0             # extra bps each side (optional)
+  intrabar_priority: "stop_first"  # "stop_first" | "tp_first"
+
+shorting:
+  enable_shorts: true
+  short_borrow_rate_annual: 0.12    # 12% borrow fee (tune per broker / borrow availability)
+  short_rebate_rate_annual: 0.00    # interest on short proceeds (often ~0 for retail)
+  short_margin_pct: 0.50            # Reg-T-like: 0.50 => 150% initial margin
+  collateralize_proceeds: true
+
+portfolio:
+  initial_capital: 10000000.0       # 10M RUB
+  max_positions: 20
+  position_sizing:
+    mode: "fraction_of_equity"      # "fixed_cash" | "fraction_of_equity"
+    fixed_cash: 200000.0
+    fraction: 0.05                  # 5% of equity per trade
+  allow_multiple_positions_per_ticker: false
+
+metrics:
+  risk_free_rate_annual: 0.10       # used for Sharpe/Sortino (tune)
+  trading_days_per_year: 252
+
+# Strategy suite. Each strategy is a parameter set applied to the same event table.
+strategies:
+  - name: "LongOnly_TP3_SL1_NextDayOpen"
+    long_threshold: 1
+    short_threshold: -999
+    take_profit_pct: 0.03
+    stop_loss_pct: 0.01
+    time_exit:
+      mode: "next_day"
+      price: "open"
+
+  - name: "LongOnly_StrongSent_TP3_SL1_NextDayOpen"
+    long_threshold: 2
+    short_threshold: -999
+    take_profit_pct: 0.03
+    stop_loss_pct: 0.01
+    time_exit:
+      mode: "next_day"
+      price: "open"
+
+  - name: "LongShort_TP3_SL1_NextDayOpen"
+    long_threshold: 1
+    short_threshold: -1
+    take_profit_pct: 0.03
+    stop_loss_pct: 0.01
+    time_exit:
+      mode: "next_day"
+      price: "open"
+
+  - name: "LongShort_TP3_SL1_WeekClose"
+    long_threshold: 1
+    short_threshold: -1
+    take_profit_pct: 0.03
+    stop_loss_pct: 0.01
+    time_exit:
+      mode: "n_days"
+      n_days: 7
+      price: "close"
+
+  - name: "LongShort_StrongOnly_WeekClose"
+    long_threshold: 2
+    short_threshold: -2
+    take_profit_pct: 0.03
+    stop_loss_pct: 0.01
+    time_exit:
+      mode: "n_days"
+      n_days: 7
+      price: "close"
+
+  - name: "LongShort_SizeBySentiment_WeekClose"
+    long_threshold: 1
+    short_threshold: -1
+    take_profit_pct: 0.03
+    stop_loss_pct: 0.01
+    size_by_sentiment: true
+    time_exit:
+      mode: "n_days"
+      n_days: 7
+      price: "close"
+  - name: LS_StrongOnly_WeekClose_Delay30m
+    long_threshold: 2
+    short_threshold: -2
+    take_profit_pct: 0.03
+    stop_loss_pct: 0.01
+    size_by_sentiment: false
+    time_exit_mode: n_days
+    time_exit_n_days: 5
+    time_exit_price: close
+    entry_delay_minutes: 30
+
+  # B) Cooldown (avoid spam: at most one signal per ticker every 6 hours)
+  - name: LS_StrongOnly_WeekClose_Cooldown6h
+    long_threshold: 2
+    short_threshold: -2
+    take_profit_pct: 0.03
+    stop_loss_pct: 0.01
+    size_by_sentiment: false
+    time_exit_mode: n_days
+    time_exit_n_days: 5
+    time_exit_price: close
+    cooldown_minutes: 360
+
+  # C) Limit per ticker per day
+  - name: LS_StrongOnly_WeekClose_1PerTickerPerDay
+    long_threshold: 2
+    short_threshold: -2
+    take_profit_pct: 0.03
+    stop_loss_pct: 0.01
+    size_by_sentiment: false
+    time_exit_mode: n_days
+    time_exit_n_days: 5
+    time_exit_price: close
+    per_ticker_daily_limit: 1
+
+  # D) Global daily top-K selection (only trade top 15 strongest per day)
+  - name: LS_StrongOnly_WeekClose_Top15PerDay
+    long_threshold: 2
+    short_threshold: -2
+    take_profit_pct: 0.03
+    stop_loss_pct: 0.01
+    size_by_sentiment: true
+    time_exit_mode: n_days
+    time_exit_n_days: 5
+    time_exit_price: close
+    daily_top_k: 15
+
+  # E) Wider TP/SL regime (less whipsaw)
+  - name: LS_StrongOnly_WeekClose_TP5_SL2
+    long_threshold: 2
+    short_threshold: -2
+    take_profit_pct: 0.05
+    stop_loss_pct: 0.02
+    size_by_sentiment: false
+    time_exit_mode: n_days
+    time_exit_n_days: 5
+    time_exit_price: close
+
+  # F) Next-day close instead of open (tests overnight gap effect)
+  - name: LS_StrongOnly_NextDayClose
+    long_threshold: 2
+    short_threshold: -2
+    take_profit_pct: 0.03
+    stop_loss_pct: 0.01
+    size_by_sentiment: false
+    time_exit_mode: next_day
+    time_exit_n_days: null
+    time_exit_price: close
