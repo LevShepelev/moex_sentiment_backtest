@@ -34,6 +34,10 @@ metrics:
   trading_days_per_year: 252
 
 # Strategy suite. Each strategy is a parameter set applied to the same event table.
+#
+# Optional timing (per strategy):
+#   entry_delay_minutes: N   # shift news timestamp by N minutes before entry bar = first bar with ts >= (news_ts + N).
+#                           # Use 1 or 2 to model a short pause between headline and trading.
 strategies:
   - name: "LongOnly_TP3_SL1_NextDayOpen"
     long_threshold: 1
@@ -146,6 +150,29 @@ strategies:
     take_profit_pct: 0.05
     stop_loss_pct: 0.02
     size_by_sentiment: false
+    time_exit_mode: n_days
+    time_exit_n_days: 5
+    time_exit_price: close
+
+  # E1/E2) Same as (E) with 1m / 2m pause after news before entry timing
+  - name: LS_StrongOnly_WeekClose_TP5_SL2_Delay1m
+    long_threshold: 2
+    short_threshold: -2
+    take_profit_pct: 0.05
+    stop_loss_pct: 0.02
+    size_by_sentiment: false
+    entry_delay_minutes: 1
+    time_exit_mode: n_days
+    time_exit_n_days: 5
+    time_exit_price: close
+
+  - name: LS_StrongOnly_WeekClose_TP5_SL2_Delay2m
+    long_threshold: 2
+    short_threshold: -2
+    take_profit_pct: 0.05
+    stop_loss_pct: 0.02
+    size_by_sentiment: false
+    entry_delay_minutes: 2
     time_exit_mode: n_days
     time_exit_n_days: 5
     time_exit_price: close

@@ -14,3 +14,8 @@ def test_compute_metrics_smoke() -> None:
     m = compute_metrics(r, eq, risk_free_rate_annual=0.0, trading_days_per_year=252)
     assert m.n_trades == 5
     assert 0.0 <= m.win_rate <= 1.0
+    assert m.median_hold_minutes == 0.0
+
+    hm = np.array([60.0, 120.0, 90.0, 30.0, 45.0], dtype=float)
+    m2 = compute_metrics(r, eq, hold_minutes=hm)
+    assert m2.median_hold_minutes == 60.0

@@ -13,6 +13,7 @@ class PerformanceMetrics:
     win_rate: float
     avg_trade_return: float
     median_trade_return: float
+    median_hold_minutes: float
     profit_factor: float
     expectancy: float
     max_drawdown: float
@@ -43,8 +44,11 @@ def compute_metrics(
     equity_curve: Optional[pd.Series],
     risk_free_rate_annual: float = 0.0,
     trading_days_per_year: int = 252,
+    hold_minutes: Optional[np.ndarray] = None,
 ) -> PerformanceMetrics:
-    trade_returns = trade_returns[~np.isnan(trade_returns)]
+    tr = np.asarray(trade_returns, dtype=float)
+    mask = ~np.isnan(tr)
+    trade_returns = tr[mask]
     n = int(trade_returns.shape[0])
     if n == 0:
         return PerformanceMetrics(
@@ -52,6 +56,7 @@ def compute_metrics(
             win_rate=0.0,
             avg_trade_return=0.0,
             median_trade_return=0.0,
+            median_hold_minutes=0.0,
             profit_factor=0.0,
             expectancy=0.0,
             max_drawdown=0.0,
@@ -61,6 +66,15 @@ def compute_metrics(
             sortino=0.0,
             calmar=0.0,
         )
+
+    med_hold = 0.0
+    if hold_minutes is not None:
+        hm = np.asarray(hold_minutes, dtype=float)
+        if hm.shape[0] == tr.shape[0]:
+            hm = hm[mask]
+            hm = hm[~np.isnan(hm)]
+            if hm.shape[0] > 0:
+                med_hold = float(np.median(hm))
 
     win_rate = float((trade_returns > 0).mean())
     avg_r = float(trade_returns.mean())
@@ -118,6 +132,7 @@ def compute_metrics(
         win_rate=win_rate,
         avg_trade_return=avg_r,
         median_trade_return=med_r,
+        median_hold_minutes=med_hold,
         profit_factor=profit_factor,
         expectancy=expectancy,
         max_drawdown=max_dd,

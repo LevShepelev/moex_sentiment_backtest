@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
 
-from pydantic import BaseModel, Field, PositiveFloat
+from pydantic import BaseModel, Field, PositiveFloat, model_validator
 
 
 class DataSettings(BaseModel):
@@ -58,6 +58,55 @@ class StrategySpec(BaseModel):
     stop_loss_pct: float = Field(0.01, ge=0.0, le=1.0)
     size_by_sentiment: bool = False
     time_exit: TimeExit = TimeExit()
+
+    # Signal timing / selection (see make_signals)
+    entry_delay_minutes: int = Field(
+        0,
+        ge=0,
+        description="Minutes to shift each news timestamp forward before entry bar lookup (execution / reaction lag).",
+    )
+    cooldown_minutes: int = Field(
+        0,
+        ge=0,
+        description="Minimum minutes between accepted signals on the same ticker; 0 = off.",
+    )
+    per_ticker_daily_limit: int = Field(
+        0,
+        ge=0,
+        description="Max signals per ticker per calendar day; 0 = unlimited.",
+    )
+    daily_top_k: int = Field(
+        0,
+        ge=0,
+        description="Keep only top K signals per calendar day by score; 0 = off.",
+    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _merge_flat_time_exit(cls, data: Any) -> Any:
+        """Support YAML that uses time_exit_mode / time_exit_n_days / time_exit_price instead of nested time_exit."""
+        if not isinstance(data, dict):
+            return data
+        out = dict(data)
+        te_nested = out.get("time_exit")
+        has_nested = isinstance(te_nested, dict) and len(te_nested) > 0
+
+        has_flat = any(
+            k in out for k in ("time_exit_mode", "time_exit_n_days", "time_exit_price")
+        )
+        if has_flat:
+            if not has_nested:
+                mode_f = out.get("time_exit_mode")
+                n_f = out.get("time_exit_n_days")
+                price_f = out.get("time_exit_price")
+                out["time_exit"] = {
+                    "mode": mode_f if mode_f is not None else "next_day",
+                    "n_days": n_f,
+                    "price": price_f if price_f is not None else "open",
+                }
+            for k in ("time_exit_mode", "time_exit_n_days", "time_exit_price"):
+                out.pop(k, None)
+        return out
 
 
 class AppConfig(BaseModel):

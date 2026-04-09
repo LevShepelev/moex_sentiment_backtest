@@ -21,7 +21,7 @@ class SignalSpec:
     time_exit_price: Literal["open", "close"]
 
     # NEW knobs (implemented)
-    entry_delay_minutes: int = 0              # shift entry timestamp forward
+    entry_delay_minutes: int = 0              # add to news ts before first bar >= signal time (execution lag)
     cooldown_minutes: int = 0                 # per-ticker cooldown between accepted signals
     per_ticker_daily_limit: int = 0           # 0 = unlimited, else max signals per (ticker, day)
     daily_top_k: int = 0                      # 0 = disabled, else keep top K signals per day by score

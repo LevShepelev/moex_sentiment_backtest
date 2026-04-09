@@ -116,11 +116,10 @@ def run_suite(
             time_exit_mode=spec.time_exit.mode,
             time_exit_n_days=spec.time_exit.n_days,
             time_exit_price=spec.time_exit.price,
-            # optional new knobs if present in config (safe defaults)
-            entry_delay_minutes=getattr(spec, "entry_delay_minutes", 0),
-            cooldown_minutes=getattr(spec, "cooldown_minutes", 0),
-            per_ticker_daily_limit=getattr(spec, "per_ticker_daily_limit", 0),
-            daily_top_k=getattr(spec, "daily_top_k", 0),
+            entry_delay_minutes=spec.entry_delay_minutes,
+            cooldown_minutes=spec.cooldown_minutes,
+            per_ticker_daily_limit=spec.per_ticker_daily_limit,
+            daily_top_k=spec.daily_top_k,
         )
 
         signals = make_signals(events, sigspec)
@@ -194,6 +193,7 @@ def run_suite(
             equity_curve=equity_curve if not equity_curve.empty else None,
             risk_free_rate_annual=float(cfg.metrics.risk_free_rate_annual),
             trading_days_per_year=int(cfg.metrics.trading_days_per_year),
+            hold_minutes=executed.get_column("hold_minutes").to_numpy(),
         )
 
         row = {
@@ -202,6 +202,7 @@ def run_suite(
             "win_rate": m.win_rate,
             "avg_trade_return": m.avg_trade_return,
             "median_trade_return": m.median_trade_return,
+            "median_hold_minutes": m.median_hold_minutes,
             "profit_factor": m.profit_factor,
             "expectancy": m.expectancy,
             "max_drawdown": m.max_drawdown,
